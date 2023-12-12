@@ -109,5 +109,5 @@ fn now(alloc: Allocator) ![]const u8 {
     const minutes = dayseconds.getMinutesIntoHour();
     const seconds = dayseconds.getSecondsIntoMinute();
 
-    return try std.fmt.allocPrint(alloc, "{d}-{:02}-{:02}T{:02}:{:02}:{:02}", .{ year.year, month.month.numeric(), day, hours, minutes, seconds });
+    return try std.fmt.allocPrint(alloc, "{d}-{:0>2}-{:0>2}T{:0>2}:{:0>2}:{:0>2}", .{ year.year, month.month.numeric(), day, hours, minutes, seconds });
 }
