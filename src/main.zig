@@ -4,7 +4,6 @@ const File = std.fs.File;
 
 const Cmd = enum { inc, dec, ls, invalid };
 const Error = error{ InvalidCommand, CounterNameTooLong, FileNotFound };
-const FileContent = struct { content: []u8, path: []u8 };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -26,8 +25,8 @@ pub fn main() !void {
             stdOut.print("Removed value {s}", .{removedLn}) catch return;
         },
         .ls => {
-            const file = read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
-            stdOut.print("Entries:\n{s}", .{file.content}) catch return;
+            const content = read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
+            stdOut.print("Entries:\n{s}", .{content}) catch return;
         },
         .invalid => stdErr.print("Invalid command!\n", .{}) catch return,
     }
@@ -45,31 +44,32 @@ fn appendToFile(name: []const u8, content: []const u8) !void {
 }
 
 fn removeLn(name: []const u8, alloc: Allocator) ![]u8 {
-    const file = try read(name, alloc);
+    const content = try read(name, alloc);
+    const path = try appendFilePath(name);
 
-    const prevEntryPos: u64 = file.content.len - 20;
+    const prevEntryPos = content.len - 20;
 
     if (prevEntryPos == 0) {
-        try std.fs.cwd().deleteFile(file.path);
-        return file.content[prevEntryPos..file.content.len];
+        try std.fs.cwd().deleteFile(path);
+        return content[prevEntryPos..content.len];
     }
 
-    const outFile = try std.fs.cwd().openFile(file.path, .{ .mode = .write_only });
+    const outFile = try std.fs.cwd().openFile(path, .{ .mode = .write_only });
     defer outFile.close();
 
     try outFile.setEndPos(0);
-    try outFile.writeAll(file.content[0..prevEntryPos]);
+    try outFile.writeAll(content[0..prevEntryPos]);
 
-    return file.content[prevEntryPos..file.content.len];
+    return content[prevEntryPos..content.len];
 }
 
-fn read(name: []const u8, alloc: Allocator) !FileContent {
+fn read(name: []const u8, alloc: Allocator) ![]u8 {
     const path = try appendFilePath(name);
 
-    const readFile = std.fs.cwd().openFile(path, .{ .mode = .read_only }) catch return Error.FileNotFound;
-    defer readFile.close();
+    const file = std.fs.cwd().openFile(path, .{ .mode = .read_only }) catch return Error.FileNotFound;
+    defer file.close();
 
-    return .{ .content = try readFile.readToEndAlloc(alloc, std.math.maxInt(usize)), .path = path };
+    return try file.readToEndAlloc(alloc, std.math.maxInt(usize));
 }
 
 fn parseCmd(command: [:0]u8) Error!Cmd {
