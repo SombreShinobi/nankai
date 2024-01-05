@@ -1,9 +1,9 @@
 const std = @import("std");
+const parser = @import("parser.zig");
+const types = @import("types.zig");
+
 const Allocator = std.mem.Allocator;
 const File = std.fs.File;
-
-const Cmd = enum { inc, dec, ls, invalid };
-const Error = error{ InvalidCommand, CounterNameTooLong, FileNotFound };
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -14,9 +14,17 @@ pub fn main() !void {
     const stdErr = std.io.getStdErr().writer();
     const stdOut = std.io.getStdOut().writer();
 
-    const cmd = try parseCmd(args[1]);
+    const cmd = parser.parseInput(args) catch |err| {
+        switch (err) {
+            .invalid_command => stdErr.print("Invalid command!\n", .{}) catch return,
+            .invalid_option => stdErr.print("Invalid option!\n", .{}) catch return,
+            else => stdErr.print("Don't know how you got here, but you did it, you legend!\n", .{}) catch return,
+        }
 
-    switch (cmd) {
+        return;
+    };
+
+    switch (cmd.cmd) {
         .inc => {
             try appendToFile(args[2], try now(allocator));
         },
@@ -28,7 +36,6 @@ pub fn main() !void {
             const content = read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
             stdOut.print("Entries:\n{s}", .{content}) catch return;
         },
-        .invalid => stdErr.print("Invalid command!\n", .{}) catch return,
     }
 }
 
@@ -66,18 +73,14 @@ fn removeLn(name: []const u8, alloc: Allocator) ![]u8 {
 fn read(name: []const u8, alloc: Allocator) ![]u8 {
     const path = try appendFilePath(name);
 
-    const file = std.fs.cwd().openFile(path, .{ .mode = .read_only }) catch return Error.FileNotFound;
+    const file = std.fs.cwd().openFile(path, .{ .mode = .read_only }) catch return types.Error.file_not_found;
     defer file.close();
 
     return try file.readToEndAlloc(alloc, std.math.maxInt(usize));
 }
 
-fn parseCmd(command: [:0]u8) Error!Cmd {
-    return std.meta.stringToEnum(Cmd, command) orelse return Cmd.invalid;
-}
-
 fn appendFilePath(name: []const u8) ![]u8 {
-    if (name.len > 124) return Error.CounterNameTooLong;
+    if (name.len > 124) return types.Error.counter_name_too_long;
 
     var buff: [128]u8 = undefined;
     return std.fmt.bufPrint(&buff, "{s}.txt", .{name});
