@@ -10,13 +10,10 @@ const WriteOption = types.WriteOption;
 
 pub fn parseInput(args: [][:0]u8) Error!Instruction {
     const cmd = std.meta.stringToEnum(Cmd, args[1]) orelse return Error.invalid_command;
-    var opt: Option = undefined;
-
-    if (cmd == .ls) {
-        opt.read = std.meta.stringToEnum(ReadOption, args[3]) orelse return Error.invalid_option;
-    } else {
-        opt.write = std.meta.stringToEnum(WriteOption, args[3]) orelse return Error.invalid_option;
-    }
+    const opt: Option = switch (cmd) {
+        .ls => std.meta.stringToEnum(ReadOption, args[3]) orelse return Error.invalid_option,
+        else => std.meta.stringToEnum(WriteOption, args[3]) orelse return Error.invalid_option,
+    };
 
     const inst = Instruction{
         .cmd = cmd,
