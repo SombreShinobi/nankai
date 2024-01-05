@@ -5,6 +5,8 @@ const types = @import("types.zig");
 const Allocator = std.mem.Allocator;
 const File = std.fs.File;
 
+const Error = types.Error;
+
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
@@ -16,8 +18,8 @@ pub fn main() !void {
 
     const cmd = parser.parseInput(args) catch |err| {
         switch (err) {
-            .invalid_command => stdErr.print("Invalid command!\n", .{}) catch return,
-            .invalid_option => stdErr.print("Invalid option!\n", .{}) catch return,
+            Error.invalid_command => stdErr.print("Invalid command!\n", .{}) catch return,
+            Error.invalid_option => stdErr.print("Invalid option!\n", .{}) catch return,
             else => stdErr.print("Don't know how you got here, but you did it, you legend!\n", .{}) catch return,
         }
 
