@@ -1,12 +1,13 @@
 const std = @import("std");
-const types = @import("types.zig");
 
-const Error = types.Error;
-const Cmd = types.Cmd;
-const Instruction = types.Instruction;
-const Option = types.Option;
-const ReadOption = types.ReadOption;
-const WriteOption = types.WriteOption;
+pub const Error = error{ invalid_command, invalid_option };
+
+pub const Cmd = enum { inc, dec, ls };
+
+pub const ReadOption = enum { day, month, year };
+pub const WriteOption = enum { date };
+
+pub const Instruction = struct { cmd: Cmd, option: union(enum) { read: ReadOption, write: WriteOption } };
 
 pub fn parseInput(args: [][:0]u8) Error!Instruction {
     const cmd = std.meta.stringToEnum(Cmd, args[1]) orelse return Error.invalid_command;

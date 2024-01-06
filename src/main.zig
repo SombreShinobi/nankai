@@ -1,11 +1,11 @@
 const std = @import("std");
 const parser = @import("parser.zig");
-const types = @import("types.zig");
 
 const Allocator = std.mem.Allocator;
 const File = std.fs.File;
 
-const Error = types.Error;
+const Error = error{ counter_name_too_long, file_not_found };
+const ParseError = parser.Error;
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -18,9 +18,8 @@ pub fn main() !void {
 
     const cmd = parser.parseInput(args) catch |err| {
         switch (err) {
-            Error.invalid_command => stdErr.print("Invalid command!\n", .{}) catch return,
-            Error.invalid_option => stdErr.print("Invalid option!\n", .{}) catch return,
-            else => stdErr.print("Don't know how you got here, but you did it, you legend!\n", .{}) catch return,
+            ParseError.invalid_command => stdErr.print("Invalid command!\n", .{}) catch return,
+            ParseError.invalid_option => stdErr.print("Invalid option!\n", .{}) catch return,
         }
 
         return;
@@ -75,14 +74,14 @@ fn removeLn(name: []const u8, alloc: Allocator) ![]u8 {
 fn read(name: []const u8, alloc: Allocator) ![]u8 {
     const path = try appendFilePath(name);
 
-    const file = std.fs.cwd().openFile(path, .{ .mode = .read_only }) catch return types.Error.file_not_found;
+    const file = std.fs.cwd().openFile(path, .{ .mode = .read_only }) catch return Error.file_not_found;
     defer file.close();
 
     return try file.readToEndAlloc(alloc, std.math.maxInt(usize));
 }
 
 fn appendFilePath(name: []const u8) ![]u8 {
-    if (name.len > 124) return types.Error.counter_name_too_long;
+    if (name.len > 124) return Error.counter_name_too_long;
 
     var buff: [128]u8 = undefined;
     return std.fmt.bufPrint(&buff, "{s}.txt", .{name});
