@@ -6,6 +6,7 @@ const File = std.fs.File;
 
 const Error = error{ counter_name_too_long, file_not_found };
 const ParseError = parser.Error;
+const ENTRY_LEN = 20;
 
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
@@ -37,6 +38,10 @@ pub fn main() !void {
             const content = read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
             stdOut.print("Entries:\n{s}", .{content}) catch return;
         },
+        .c => {
+            const content = read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
+            stdOut.print("Count: {d}\n", .{content.len / ENTRY_LEN}) catch return;
+        },
     }
 }
 
@@ -55,7 +60,7 @@ fn removeLn(name: []const u8, alloc: Allocator) ![]u8 {
     const content = try read(name, alloc);
     const path = try appendFilePath(name);
 
-    const prevEntryPos = content.len - 20;
+    const prevEntryPos = content.len - ENTRY_LEN;
 
     if (prevEntryPos == 0) {
         try std.fs.cwd().deleteFile(path);
