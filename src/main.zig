@@ -16,7 +16,7 @@ pub fn main() !void {
     const stdErr = std.io.getStdErr().writer();
     const stdOut = std.io.getStdOut().writer();
 
-    const cmd = parser.parseInput(args) catch |err| {
+    const input = parser.parseInput(args) catch |err| {
         switch (err) {
             ParserError.invalid_command => stdErr.print("Invalid command!\n", .{}) catch return,
             ParserError.invalid_option => stdErr.print("Invalid option!\n", .{}) catch return,
@@ -25,9 +25,16 @@ pub fn main() !void {
         return;
     };
 
-    switch (cmd.cmd) {
+    switch (input.cmd) {
         .inc => {
-            try file.appendToFile(args[2], try date.now(allocator));
+            var value: []const u8 = undefined;
+            if (input.option != null and input.option.?.write == parser.WriteOption.date) {
+                value = input.optval.?;
+            } else {
+                value = date.now(allocator) catch return stdErr.print("Error: Cannot get current date!\n", .{});
+            }
+
+            file.appendToFile(args[2], value) catch return stdErr.print("Error: Cannot append to file!\n", .{});
         },
         .dec => {
             const removedLn = file.removeLn(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
