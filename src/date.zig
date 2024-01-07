@@ -1,4 +1,5 @@
 const std = @import("std");
+
 const Allocator = std.mem.Allocator;
 
 pub fn now(alloc: Allocator) ![]const u8 {

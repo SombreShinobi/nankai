@@ -1,9 +1,10 @@
 const std = @import("std");
 
-const Error = error{ counter_name_too_long, file_not_found };
-
 const File = std.fs.File;
 const Allocator = std.mem.Allocator;
+
+const Error = error{ counter_name_too_long, file_not_found };
+
 pub const ENTRY_LEN = 20;
 
 pub fn appendToFile(name: []const u8, content: []const u8) !void {

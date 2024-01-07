@@ -3,7 +3,6 @@ const std = @import("std");
 pub const Error = error{ invalid_command, invalid_option };
 
 pub const Cmd = enum { inc, dec, ls, c };
-
 pub const ReadOption = enum { day, month, year };
 pub const WriteOption = enum { date };
 
