@@ -51,7 +51,7 @@ fn appendFilePath(name: []const u8) ![]u8 {
     if (name.len > 124) return Error.counter_name_too_long;
 
     var buff: [128]u8 = undefined;
-    return std.fmt.bufPrint(&buff, "{s}.txt", .{name});
+    return std.fmt.bufPrint(&buff, "/Users/sibin/.local/share/nkai/{s}.txt", .{name});
 }
 
 fn createFile(name: []const u8) !File {

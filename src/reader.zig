@@ -1,5 +1,6 @@
 const std = @import("std");
 const parser = @import("parser.zig");
+const file = @import("file.zig");
 
 const Allocator = std.mem.Allocator;
 const SplitIterator = std.mem.SplitIterator(u8, std.mem.DelimiterType.scalar);
@@ -32,7 +33,7 @@ fn filter(arrList: *std.ArrayList(u8), rows: *SplitIterator, optVal: []const u8,
 
 pub fn count(content: []u8, opt: ?parser.Option, optVal: ?[]const u8) !usize {
     if (optVal == null) {
-        return content.len;
+        return content.len / file.ENTRY_LEN;
     }
 
     var rows = std.mem.splitScalar(u8, content, '\n');
