@@ -2,6 +2,7 @@ const std = @import("std");
 const parser = @import("parser.zig");
 const file = @import("file.zig");
 const date = @import("date.zig");
+const reader = @import("reader.zig");
 
 const Allocator = std.mem.Allocator;
 
@@ -42,48 +43,11 @@ pub fn main() !void {
         },
         .ls => {
             const content = file.read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
-            try list(content, input.option, input.optval, allocator);
+            stdOut.print("{s}", .{try reader.list(content, input.option, input.optval, allocator)}) catch return;
         },
         .c => {
             const content = file.read(args[2], allocator) catch return stdErr.print("Error: Counter doesn't exist!\n", .{});
-            stdOut.print("{d}\n", .{content.len / file.ENTRY_LEN}) catch return;
+            stdOut.print("{d}\n", .{try reader.count(content, input.option, input.optval)}) catch return;
         },
     }
-}
-
-fn list(content: []u8, opt: ?parser.Option, optVal: ?[]const u8, alloc: Allocator) !void {
-    const stdOut = std.io.getStdOut().writer();
-
-    if (optVal == null) {
-        stdOut.print("{s}", .{content}) catch return;
-        return;
-    }
-
-    var rows = std.mem.splitScalar(u8, content, '\n');
-    var result = std.ArrayList(u8).init(alloc);
-
-    if (opt.?.read == parser.ReadOption.day) {
-        while (rows.next()) |row| {
-            if (row.len > 0 and std.mem.eql(u8, row[8..10], optVal.?)) {
-                try result.appendSlice(row);
-                try result.append('\n');
-            }
-        }
-    } else if (opt.?.read == parser.ReadOption.month) {
-        while (rows.next()) |row| {
-            if (row.len > 0 and std.mem.eql(u8, row[5..7], optVal.?)) {
-                try result.appendSlice(row);
-                try result.append('\n');
-            }
-        }
-    } else {
-        while (rows.next()) |row| {
-            if (row.len > 0 and std.mem.eql(u8, row[0..4], optVal.?)) {
-                try result.appendSlice(row);
-                try result.append('\n');
-            }
-        }
-    }
-
-    stdOut.print("{s}", .{try result.toOwnedSlice()}) catch return;
 }
