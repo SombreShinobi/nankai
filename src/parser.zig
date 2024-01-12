@@ -5,7 +5,7 @@ pub const Error = error{ invalid_command, invalid_option };
 pub const Cmd = enum { inc, dec, ls, c };
 pub const ReadOption = enum { day, month, year };
 pub const WriteOption = enum { date };
-const Option = union(enum) { read: ReadOption, write: WriteOption };
+pub const Option = union(enum) { read: ReadOption, write: WriteOption };
 
 pub const Instruction = struct { cmd: Cmd, option: ?Option, optval: ?[]const u8 };
 
@@ -34,6 +34,9 @@ fn parseOption(arg: [:0]u8, cmd: Cmd) Error!Instruction {
     const val = parts.next();
 
     if (val == null or val.?.len > 20) return Error.invalid_option;
+
+    if ((option.read == .day or option.read == .month) and val.?.len > 2) return Error.invalid_option;
+    if (option.read == .year and val.?.len > 4) return Error.invalid_option;
 
     return Instruction{ .cmd = cmd, .option = option, .optval = val };
 }
